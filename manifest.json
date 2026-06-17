@@ -1,75 +1,23 @@
 {
-  "id": "/index.html",
   "name": "CompraConsultor — Contrataciones Panamá",
   "short_name": "CompraConsultor",
-  "description": "Asistente IA especializado en contrataciones menores de Panamá: Ley 22 de 2006 y Decreto Ejecutivo 439/2020",
+  "description": "Asistente IA sobre Ley 22 de 2006 y D.E. 439/2020",
   "start_url": "/index.html",
-  "scope": "/",
   "display": "standalone",
   "background_color": "#f5f7fa",
   "theme_color": "#003366",
   "orientation": "portrait",
   "lang": "es-PA",
-  "dir": "ltr",
-  "categories": ["business", "productivity", "utilities"],
   "icons": [
     {
       "src": "icons/icon-192.png",
       "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "icons/icon-192-maskable.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "maskable"
+      "type": "image/png"
     },
     {
       "src": "icons/icon-512.png",
       "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "icons/icon-512-maskable.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "maskable"
+      "type": "image/png"
     }
-  ],
-  "screenshots": [
-    {
-      "src": "screenshots/chat-mobile.png",
-      "sizes": "390x844",
-      "type": "image/png",
-      "form_factor": "narrow",
-      "label": "Consulta sobre contrataciones menores"
-    },
-    {
-      "src": "screenshots/chat-desktop.png",
-      "sizes": "1280x720",
-      "type": "image/png",
-      "form_factor": "wide",
-      "label": "Interfaz de chat en escritorio"
-    }
-  ],
-  "shortcuts": [
-    {
-      "name": "Nueva consulta",
-      "short_name": "Nueva",
-      "description": "Iniciar una nueva consulta legal",
-      "url": "/index.html?action=new",
-      "icons": [{ "src": "icons/shortcut-new.png", "sizes": "96x96" }]
-    },
-    {
-      "name": "Ver historial",
-      "short_name": "Historial",
-      "description": "Acceder a consultas anteriores",
-      "url": "/index.html?action=history",
-      "icons": [{ "src": "icons/shortcut-history.png", "sizes": "96x96" }]
-    }
-  ],
-  "related_applications": [],
-  "prefer_related_applications": false
+  ]
 }
