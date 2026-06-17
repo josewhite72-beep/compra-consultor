@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>CompraConsultor — Contrataciones Menores Panamá</title>
+<meta name="description" content="Asistente IA sobre Ley 22 de 2006 y D.E. 439/2020 para contrataciones menores en Panamá">
+<meta name="theme-color" content="#003366">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<style>
+  :root {
+    --primary: #003366;
+    --accent: #DA291C;
+    --bg: #f5f7fa;
+    --user-bg: #e3f2fd;
+    --bot-bg: #ffffff;
+    --text: #1a1a1a;
+    --muted: #6b7280;
+    --border: #e5e7eb;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0f172a;
+      --bot-bg: #1e293b;
+      --text: #e2e8f0;
+      --border: #334155;
+      --user-bg: #1e3a5f;
+    }
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  header {
+    background: var(--primary);
+    color: white;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    z-index: 10;
+  }
+  header .logo { font-size: 24px; }
+  header h1 { font-size: 16px; font-weight: 600; flex: 1; }
+  header button {
+    background: rgba(255,255,255,0.15);
+    border: none;
+    color: white;
+    padding: 8px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 18px;
+    transition: background 0.2s;
+  }
+  header button:hover { background: rgba(255,255,255,0.25); }
+  #topics {
+    background: var(--bot-bg);
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  #topics::-webkit-scrollbar { display: none; }
+  .topic-btn {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .topic-btn:hover { background: var(--primary); color: white; border-color: var(--primary); }
+  #chat {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    scroll-behavior: smooth;
+  }
+  .msg {
+    max-width: 85%;
+    padding: 12px 16px;
+    border-radius: 18px;
+    line-height: 1.6;
+    font-size: 14px;
+    word-wrap: break-word;
+    animation: fadeIn 0.3s ease;
+  }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  .msg.user {
+    background: var(--primary);
+    color: white;
+    align-self: flex-end;
+    border-bottom-right-radius: 4px;
+  }
+  .msg.bot {
+    background: var(--bot-bg);
+    border: 1px solid var(--border);
+    align-self: flex-start;
+    border-bottom-left-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  }
+  .msg.bot .cite {
+    display: inline-block;
+    margin-top: 8px;
+    padding: 2px 8px;
+    background: rgba(218,41,28,0.1);
+    border-radius: 4px;
+    font-size: 11px;
+    color: var(--accent);
+    font-weight: 600;
+  }
+  .msg.bot code {
+    background: var(--bg);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-family: 'SF Mono', Monaco, monospace;
+  }
+  .msg.bot strong { color: var(--primary); }
+  .msg.bot ul { margin: 8px 0 8px 20px; }
+  .msg.bot li { margin-bottom: 4px; }
+  .typing {
+    display: flex;
+    gap: 4px;
+    padding: 12px 16px;
+    background: var(--bot-bg);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    align-self: flex-start;
+    width: fit-content;
+  }
+  .typing span {
+    width: 8px;
+    height: 8px;
+    background: var(--muted);
+    border-radius: 50%;
+    animation: bounce 1.4s infinite;
+  }
+  .typing span:nth-child(2) { animation-delay: 0.2s; }
+  .typing span:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes bounce { 0%, 60%, 100% { transform: translateY(0); } 30% { transform: translateY(-8px); } }
+  #input-area {
+    background: var(--bot-bg);
+    padding: 12px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    gap: 8px;
+  }
+  #input-area input {
+    flex: 1;
+    padding: 12px 16px;
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s;
+    background: var(--bg);
+    color: var(--text);
+  }
+  #input-area input:focus { border-color: var(--primary); }
+  #input-area button {
+    background: var(--primary);
+    color: white;
+    border: none;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+    flex-shrink: 0;
+  }
+  #input-area button:hover { background: var(--accent); }
+  #input-area button:disabled { background: var(--muted); cursor: not-allowed; }
+  #history-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  #history-modal.active { display: flex; }
+  #history-modal .content {
+    background: var(--bot-bg);
+    border-radius: 16px;
+    width: 100%;
+    max-width: 500px;
+    max-height: 80vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--border);
+  }
+  #history-modal header {
+    padding: 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--bg);
+  }
+  #history-modal header h2 { font-size: 16px; color: var(--text); }
+  #history-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px;
+  }
+  .history-item {
+    padding: 12px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: var(--bg);
+  }
+  .history-item:hover { background: var(--user-bg); border-color: var(--primary); }
+  .history-item .title { font-weight: 600; font-size: 14px; margin-bottom: 4px; color: var(--text); }
+  .history-item .meta { font-size: 11px; color: var(--muted); }
+  .history-item .delete {
+    float: right;
+    background: none;
+    border: none;
+    color: var(--accent);
+    cursor: pointer;
+    font-size: 16px;
+    padding: 0 4px;
+  }
+  #install-btn {
+    display: none;
+    background: var(--accent);
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 12px;
+    cursor: pointer;
+    font-weight: 600;
+  }
+  #toast {
+    position: fixed;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: var(--primary);
+    color: white;
+    padding: 12px 20px;
+    border-radius: 24px;
+    font-size: 13px;
+    z-index: 200;
+    opacity: 0;
+    transition: all 0.3s ease;
+    pointer-events: none;
+    white-space: nowrap;
+  }
+  #toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+  @media (max-width: 480px) {
+    .msg { max-width: 92%; font-size: 13px; }
+    header h1 { font-size: 14px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <span class="logo">🏛️</span>
+  <h1>CompraConsultor</h1>
+  <button id="install-btn" title="Instalar app">📲 Instalar</button>
+  <button id="history-btn" title="Historial">📋</button>
+  <button id="new-btn" title="Nueva consulta">✨</button>
+</header>
+
+<div id="topics">
+  <button class="topic-btn" data-q="¿Qué es una contratación menor y cuál es su límite?">📌 ¿Qué es CM?</button>
+  <button class="topic-btn" data-q="¿Cuáles son los niveles de cotizaciones según el monto?">💰 Niveles CM</button>
+  <button class="topic-btn" data-q="¿Qué preferencia tienen las Mipymes en contrataciones menores?">🏪 Mipymes</button>
+  <button class="topic-btn" data-q="¿Qué preferencia tiene la empresa local?">📍 Empresa Local</button>
+  <button class="topic-btn" data-q="¿Qué documentos debe presentar el proveedor en una contratación menor?">📄 Documentos</button>
+  <button class="topic-btn" data-q="Diferencias entre Licitación Pública y Contratación Menor">⚖️ CM vs LP</button>
+  <button class="topic-btn" data-q="¿Cuándo aplica el procedimiento excepcional de contratación?">🚨 Proc. Excepcional</button>
+  <button class="topic-btn" data-q="¿Qué es la división de materia y cómo evitarla?">🚫 División Materia</button>
+</div>
+
+<div id="chat"></div>
+
+<div id="input-area">
+  <input type="text" id="user-input" placeholder="Pregunta sobre Ley 22 o D.E. 439/2020..." autocomplete="off" enterkeyhint="send">
+  <button id="send-btn" aria-label="Enviar mensaje">➤</button>
+</div>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<!-- Modal Historial -->
+<div id="history-modal">
+  <div class="content">
+    <header>
+      <h2>📋 Historial de Consultas</h2>
+      <button onclick="document.getElementById('history-modal').classList.remove('active')" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--text);">✕</button>
+    </header>
+    <div id="history-list"></div>
+  </div>
+</div>
+
+<script>
+// ============================================
+// SYSTEM PROMPT — Contexto Legal Precargado
+// Basado en Ley 22 de 2006 (Texto Único ordenado por Ley 153 de 2020)
+// y Decreto Ejecutivo 439 de 2020
+// ============================================
+const SYSTEM_PROMPT = `Eres "CompraConsultor", un asistente legal especializado en contrataciones públicas de Panamá. Respondes EXCLUSIVAMENTE con base en la Ley 22 de 2006 (Texto Único ordenado por Ley 153 de 2020), el Decreto Ejecutivo 439 de 2020 (Reglamento) y los dictámenes de la Dirección General de Contrataciones Públicas (DGCP).
+
+CONTEXTO LEGAL CLAVE — CONTRATACIONES MENORES:
+
+📌 DEFINICIÓN (Art. 2 numeral 12, Ley 22):
+"Contratación menor: Procedimiento que permitirá, de manera expedita, la adquisición de bienes, servicios u obras que no excedan los cincuenta mil balboas (B/.50,000.00), cumpliéndose con un mínimo de formalidades y con sujeción a los principios de contratación que dispone la presente Ley."
+
+📌 RÉGIMEN LEGAL (Art. 57, Ley 22 / Art. 85 D.E. 439):
+- Límite máximo: B/.50,000.00
+- No exige fianza de propuesta
+- No exige fianza de cumplimiento (salvo que la entidad lo considere necesario)
+- El contratista debe garantizar por escrito: condiciones pactadas, defectos de obra (3 años), vicios de bienes (1 año), servicios (1 año)
+
+📌 NIVELES DE COTIZACIONES (Art. 87 D.E. 439/2020):
+1. Hasta B/.500.00 → mínimo 1 cotización
+2. B/.500.01 a B/.5,000.00 → mínimo 2 cotizaciones
+3. B/.5,000.01 a B/.10,000.00 → mínimo 3 cotizaciones
+4. B/.10,000.01 a B/.50,000.00 → ACTO PÚBLICO (Art. 94 D.E. 439)
+
+📌 PREFERENCIA MIPYME (Art. 57 Ley 22 / Art. 88 D.E. 439):
+Se selecciona la Mipyme si cumple requisitos y su precio NO es mayor al 5% de la propuesta más baja de empresa no Mipyme. Entre Mipymes, gana la de menor precio. Debe estar clasificada en el Registro de Proponentes de PanamaCompra.
+
+📌 PREFERENCIA EMPRESA LOCAL (Art. 12 Ley 22 / Art. 89 D.E. 439):
+Empresa domiciliada en el municipio donde se ejecuta el contrato. Gana si cumple requisitos y su precio no supera en 5% la propuesta de empresa no local.
+
+📌 PREVALENCIA (Art. 90 D.E. 439):
+Si concurren Mipyme y empresa local, PREFERENCIA a la MIPYME (con el mismo tope del 5%).
+
+📌 DOCUMENTOS DEL PROPONENTE (Art. 8 D.E. 439):
+- Declaración jurada de no incapacidad legal para contratar (Art. 24 Ley 22)
+- No se exigen documentos generales que la entidad pueda validar electrónicamente en PanamaCompra (Art. 12 D.E. 439)
+- En contrataciones menores ≤ B/.50,000: no se exige declaración jurada de medidas de retorsión a personas naturales panameñas (Art. 43 Ley 22)
+
+📌 DIVISIÓN DE MATERIA (Art. 36 Ley 22 / Art. 15-17 D.E. 439):
+PROHIBIDO dividir contratos para evadir el acto público o los umbrales de aprobación. Se PRESUME división de materia cuando:
+- Se suscriben contratos para un mismo bien/servicio/obra en 3 meses con el mismo u otro contratista
+- Para bienes perecederos o alimentos para escuelas en áreas de difícil acceso: 1 mes
+EXCEPCIONES: órdenes de compra de convenio marco y procedimiento especial de emergencia.
+
+📌 PROCEDIMIENTO EXCEPCIONAL (Art. 79 Ley 22):
+Aplica cuando no hay competencia posible: proveedor único, urgencia evidente, desastres naturales, prórrogas simples >B/.300,000, beneficio social, permuta, artistas/profesionales reconocidos, pobreza multidimensional, seguridad y defensa del Estado, investigación científica (SENACYT).
+
+📌 PLATAFORMA DE COTIZACIONES EN LÍNEA (Art. 259 D.E. 439):
+OBLIGATORIA para contrataciones menores por cotizaciones, procedimiento excepcional y emergencia.
+
+📌 ACTO PÚBLICO B/.10K-B/.50K (Art. 94 D.E. 439):
+- Propuesta electrónica con precio y propuesta técnica
+- Subsanación de documentos en 3 días hábiles
+- Verificación del proponente con menor precio
+- Plazo para adjudicar: 7 días hábiles
+- Emite orden de compra o contrato (con refrendo de Contraloría si aplica)
+
+📌 IMPUGNACIONES:
+- Acción de reclamo ante DGCP (durante el proceso, antes de adjudicación)
+- Recurso de impugnación ante Tribunal Administrativo de Contrataciones Públicas (5 días hábiles tras notificación)
+
+REGLAS DE RESPUESTA:
+1. CITA SIEMPRE el artículo específico (ej: "Art. 57 Ley 22" o "Art. 88 D.E. 439")
+2. Si la pregunta es sobre un tema NO cubierto por la Ley 22 o D.E. 439, indícalo claramente
+3. Sé preciso, conciso y práctico
+4. Usa formato con viñetas cuando listes requisitos o pasos
+5. Si hay ambigüedad, sugiere consultar el dictamen específico de la DGCP en PanamaCompra
+6. Responde SIEMPRE en español
+7. NO inventes artículos ni montos. Si no estás seguro, dilo.
+8. Para el contexto MEDUCA/FECE (escuelas), aplica las reglas generales pero menciona particularidades como la preferencia para alimentos perecederos (1 mes para evitar presunción de división de materia).`;
+
+// ============================================
+// ESTADO
+// ============================================
+let conversations = JSON.parse(localStorage.getItem('cc_conversations') || '[]');
+let currentConvId = null;
+let deferredPrompt = null;
+
+// ============================================
+// ELEMENTOS DOM
+// ============================================
+const chatEl = document.getElementById('chat');
+const inputEl = document.getElementById('user-input');
+const sendBtn = document.getElementById('send-btn');
+const historyModal = document.getElementById('history-modal');
+const historyList = document.getElementById('history-list');
+const installBtn = document.getElementById('install-btn');
+const toastEl = document.getElementById('toast');
+
+// ============================================
+// UTILIDADES
+// ============================================
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+function saveConvos() { localStorage.setItem('cc_conversations', JSON.stringify(conversations)); }
+function escapeHtml(s) { return s.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+
+function showToast(msg) {
+  toastEl.textContent = msg;
+  toastEl.classList.add('show');
+  setTimeout(() => toastEl.classList.remove('show'), 3000);
+}
+
+function formatBotResponse(text) {
+  let html = escapeHtml(text);
+  // Resaltar citas de artículos
+  html = html.replace(/(Art\.?\s*\d+[\w\s\.\/\-]*?(?:Ley\s*22|D\.?E\.?\s*439|DGCP))/gi,
+    '<span class="cite">📜 $1</span>');
+  // Negritas
+  html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  // Viñetas (ya vienen como • o - en el texto)
+  html = html.replace(/^(\s*)[-•]\s+(.+)$/gm, '$1• $2');
+  // Saltos de línea
+  html = html.replace(/\n/g, '<br>');
+  return html;
+}
+
+// ============================================
+// RENDER CHAT
+// ============================================
+function renderConversation(conv) {
+  chatEl.innerHTML = '';
+  if (!conv || !conv.messages.length) {
+    addBotMessage('¡Hola! 👋 Soy **CompraConsultor**, tu asistente sobre contrataciones menores en Panamá.\n\nPregúntame sobre:\n• La Ley 22 de 2006\n• El Decreto Ejecutivo 439/2020\n• Cotizaciones, Mipymes, empresas locales\n• Procedimientos excepcionales\n\nPuedes usar los botones de arriba o escribir tu consulta.', false);
+    return;
+  }
+  conv.messages.forEach(m => {
+    if (m.role === 'user') addUserMessage(m.content, false);
+    else addBotMessage(m.content, false);
+  });
+}
+
+function addUserMessage(text, save = true) {
+  const div = document.createElement('div');
+  div.className = 'msg user';
+  div.textContent = text;
+  chatEl.appendChild(div);
+  scrollToBottom();
+  if (save) {
+    getConv().messages.push({ role: 'user', content: text });
+    saveConvos();
+  }
+}
+
+function addBotMessage(text, save = true) {
+  const div = document.createElement('div');
+  div.className = 'msg bot';
+  div.innerHTML = formatBotResponse(text);
+  chatEl.appendChild(div);
+  scrollToBottom();
+  if (save) {
+    getConv().messages.push({ role: 'assistant', content: text });
+    saveConvos();
+  }
+}
+
+function scrollToBottom() {
+  chatEl.scrollTop = chatEl.scrollHeight;
+}
+
+function showTyping() {
+  const div = document.createElement('div');
+  div.className = 'typing';
+  div.id = 'typing-indicator';
+  div.innerHTML = '<span></span><span></span><span></span>';
+  chatEl.appendChild(div);
+  scrollToBottom();
+}
+function hideTyping() {
+  const t = document.getElementById('typing-indicator');
+  if (t) t.remove();
+}
+
+// ============================================
+// GESTIÓN DE CONVERSACIONES
+// ============================================
+function getConv() {
+  if (!currentConvId) {
+    currentConvId = uid();
+    conversations.unshift({
+      id: currentConvId,
+      title: 'Nueva consulta',
+      messages: [],
+      createdAt: Date.now()
+    });
+    saveConvos();
+  }
+  return conversations.find(c => c.id === currentConvId);
+}
+
+function newConversation() {
+  currentConvId = null;
+  renderConversation(null);
+  inputEl.focus();
+  showToast('Nueva consulta iniciada');
+}
+
+function deleteConversation(id, e) {
+  e.stopPropagation();
+  if (!confirm('¿Eliminar esta consulta?')) return;
+  conversations = conversations.filter(c => c.id !== id);
+  saveConvos();
+  if (currentConvId === id) newConversation();
+  renderHistory();
+}
+
+function loadConversation(id) {
+  currentConvId = id;
+  renderConversation(getConv());
+  historyModal.classList.remove('active');
+  inputEl.focus();
+}
+
+function renderHistory() {
+  historyList.innerHTML = '';
+  if (!conversations.length) {
+    historyList.innerHTML = '<p style="text-align:center;color:var(--muted);padding:20px;">Sin consultas aún</p>';
+    return;
+  }
+  conversations.forEach(c => {
+    const div = document.createElement('div');
+    div.className = 'history-item';
+    div.onclick = () => loadConversation(c.id);
+    const firstUserMsg = c.messages.find(m => m.role === 'user');
+    const title = firstUserMsg ? firstUserMsg.content.slice(0, 60) : c.title;
+    const date = new Date(c.createdAt).toLocaleString('es-PA', { dateStyle: 'short', timeStyle: 'short' });
+    div.innerHTML = `
+      <button class="delete" onclick="deleteConversation('${c.id}', event)" aria-label="Eliminar">🗑️</button>
+      <div class="title">${escapeHtml(title)}${firstUserMsg && firstUserMsg.content.length > 60 ? '...' : ''}</div>
+      <div class="meta">${date} · ${c.messages.length} mensajes</div>
+    `;
+    historyList.appendChild(div);
+  });
+}
+
+// ============================================
+// MANEJO DE SHORTCUTS PWA
+// ============================================
+function handleUrlParams() {
+  const params = new URLSearchParams(window.location.search);
+  const action = params.get('action');
+  if (action === 'new') {
+    newConversation();
+    window.history.replaceState({}, document.title, window.location.pathname);
+  } else if (action === 'history') {
+    renderHistory();
+    historyModal.classList.add('active');
+    window.history.replaceState({}, document.title, window.location.pathname);
+  }
+}
+
+// ============================================
+// API CALL — Groq vía proxy Vercel
+// ============================================
+async function callGroqAPI(messages) {
+  const payload = {
+    model: 'llama-3.3-70b-versatile',
+    messages: [
+      { role: 'system', content: SYSTEM_PROMPT },
+      ...messages
+    ],
+    temperature: 0.3,
+    max_tokens: 1500
+  };
+
+  const endpoints = ['/api/proxy', 'https://api.groq.com/openai/v1/chat/completions'];
+  let lastError = null;
+
+  for (const endpoint of endpoints) {
+    try {
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (!res.ok) {
+        lastError = `HTTP ${res.status}`;
+        continue;
+      }
+      const data = await res.json();
+      return data.choices[0].message.content;
+    } catch (e) {
+      lastError = e.message;
+    }
+  }
+  throw new Error('No se pudo conectar con la IA: ' + lastError);
+}
+
+// ============================================
+// SEND MESSAGE
+// ============================================
+async function sendMessage(text) {
+  if (!text.trim()) return;
+  const conv = getConv();
+  if (conv.messages.length === 0) {
+    conv.title = text.slice(0, 50);
+    saveConvos();
+  }
+  addUserMessage(text);
+  sendBtn.disabled = true;
+  showTyping();
+
+  try {
+    const reply = await callGroqAPI(conv.messages);
+    hideTyping();
+    addBotMessage(reply);
+  } catch (err) {
+    hideTyping();
+    addBotMessage('⚠️ **Error de conexión**\n\n' + err.message + '\n\nVerifica tu conexión a internet o la configuración del proxy en Vercel.\n\nSi el problema persiste, puedes consultar directamente en [PanamaCompra](https://www.panamacompra.gob.pa).');
+  } finally {
+    sendBtn.disabled = false;
+    inputEl.focus();
+  }
+}
+
+// ============================================
+// EVENT LISTENERS
+// ============================================
+sendBtn.addEventListener('click', () => {
+  sendMessage(inputEl.value);
+  inputEl.value = '';
+});
+inputEl.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage(inputEl.value);
+    inputEl.value = '';
+  }
+});
+document.querySelectorAll('.topic-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    sendMessage(btn.dataset.q);
+    inputEl.focus();
+  });
+});
+document.getElementById('new-btn').addEventListener('click', newConversation);
+document.getElementById('history-btn').addEventListener('click', () => {
+  renderHistory();
+  historyModal.classList.add('active');
+});
+
+// Cerrar modal al hacer clic fuera
+historyModal.addEventListener('click', e => {
+  if (e.target === historyModal) historyModal.classList.remove('active');
+});
+
+// ============================================
+// PWA — Service Worker + Install
+// ============================================
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').then(reg => {
+    reg.addEventListener('updatefound', () => {
+      const newWorker = reg.installing;
+      newWorker.addEventListener('statechange', () => {
+        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+          if (confirm('Hay una actualización de CompraConsultor. ¿Recargar ahora?')) {
+            newWorker.postMessage('SKIP_WAITING');
+            window.location.reload();
+          }
+        }
+      });
+    });
+  }).catch(e => console.warn('SW fail:', e));
+}
+
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  installBtn.style.display = 'inline-block';
+});
+installBtn.addEventListener('click', async () => {
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  const { outcome } = await deferredPrompt.userChoice;
+  if (outcome === 'accepted') showToast('¡App instalada!');
+  deferredPrompt = null;
+  installBtn.style.display = 'none';
+});
+
+// ============================================
+// INIT
+// ============================================
+handleUrlParams();
+if (conversations.length && !currentConvId) {
+  currentConvId = conversations[0].id;
+}
+renderConversation(getConv());
+inputEl.focus();
+</script>
+</body>
+</html>
