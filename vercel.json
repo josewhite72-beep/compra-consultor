@@ -5,6 +5,7 @@
     { "src": "/sw.js", "dest": "/sw.js" },
     { "src": "/manifest.json", "dest": "/manifest.json" },
     { "src": "/icons/(.*)", "dest": "/icons/$1" },
+    { "src": "/data/(.*)", "dest": "/data/$1" },
     { "handle": "filesystem" },
     { "src": "/(.*)", "dest": "/index.html" }
   ]

@@ -744,13 +744,132 @@ function handleUrlParams() {
 }
 
 // ============================================
+// BASE LEGAL — Carga de Ley 22 y D.E. 439 completos
+// ============================================
+let LEY22_DATA = [];
+let DE439_DATA = [];
+let legalDataLoaded = false;
+
+async function loadLegalData() {
+  try {
+    const [r1, r2] = await Promise.all([
+      fetch('/data/ley22.json'),
+      fetch('/data/de439.json')
+    ]);
+    LEY22_DATA = await r1.json();
+    DE439_DATA = await r2.json();
+    legalDataLoaded = true;
+  } catch (e) {
+    console.warn('No se pudo cargar la base legal completa, se usará solo el resumen del system prompt.', e);
+    legalDataLoaded = false;
+  }
+}
+loadLegalData();
+
+const STOPWORDS = new Set([
+  'el','la','los','las','de','del','en','y','o','a','que','se','por','para',
+  'con','un','una','su','sus','al','es','no','este','esta','estos','estas',
+  'como','cuando','lo','le','les','si','mas','sera','seran','debera','deberan',
+  'sea','sean','asi','entre','sobre','sin','que','cual','cuales','donde',
+  'que','articulo','decreto','ejecutivo','ley'
+]);
+
+function stripAccents(str) {
+  return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+}
+
+// Siglas cortas relevantes que el filtro normal de 4+ letras descartaría
+const SHORT_TERMS = new Set(['cl', 'cm', 'mipe', 'pyme']);
+
+function tokenize(str) {
+  const clean = stripAccents(str.toLowerCase());
+  const longWords = clean.match(/[a-z]{4,}/g) || [];
+  const shortWords = (clean.match(/\b[a-z]{2,3}\b/g) || []).filter(w => SHORT_TERMS.has(w));
+  return [...longWords, ...shortWords].filter(w => !STOPWORDS.has(w));
+}
+
+// Detecta menciones explícitas: "artículo 90", "art. 57", "art 12"
+function detectExplicitArticles(query) {
+  const clean = stripAccents(query.toLowerCase());
+  const matches = [...clean.matchAll(/art(?:iculo|\.)?\s*(\d{1,3})/g)];
+  return matches.map(m => parseInt(m[1], 10));
+}
+
+// Busca en ambos corpus: prioriza menciones explícitas de número de artículo,
+// si no hay, hace match por solapamiento de keywords.
+function findRelevantArticles(query, maxResults = 5) {
+  if (!legalDataLoaded) return [];
+
+  const explicitNums = detectExplicitArticles(query);
+  const results = [];
+
+  if (explicitNums.length > 0) {
+    for (const num of explicitNums) {
+      const fromLey = LEY22_DATA.find(a => a.numero === num);
+      const fromDecreto = DE439_DATA.find(a => a.numero === num);
+      if (fromLey) results.push(fromLey);
+      if (fromDecreto) results.push(fromDecreto);
+    }
+  }
+
+  // Búsqueda por keywords, complementaria (incluso si hubo match explícito,
+  // por si la pregunta menciona OTROS temas además del artículo citado)
+  const queryTokens = new Set(tokenize(query));
+  if (queryTokens.size > 0) {
+    const allArticles = [...LEY22_DATA, ...DE439_DATA];
+    const scored = allArticles
+      .filter(a => !results.includes(a))
+      .map(a => {
+        const kwSet = new Set(a.keywords || []);
+        let score = 0;
+        for (const t of queryTokens) {
+          if (kwSet.has(t)) score += 2;
+          else if (a.titulo && stripAccents(a.titulo.toLowerCase()).includes(t)) score += 1;
+        }
+        return { article: a, score };
+      })
+      .filter(x => x.score > 0)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, maxResults)
+      .map(x => x.article);
+    results.push(...scored);
+  }
+
+  // Deduplicar (por si el mismo artículo entró por ambas vías)
+  const seen = new Set();
+  const deduped = [];
+  for (const a of results) {
+    const key = a.fuente + '-' + a.numero;
+    if (!seen.has(key)) {
+      seen.add(key);
+      deduped.push(a);
+    }
+  }
+  return deduped.slice(0, maxResults + explicitNums.length);
+}
+
+function buildLegalContext(query) {
+  const articles = findRelevantArticles(query);
+  if (articles.length === 0) return '';
+
+  const blocks = articles.map(a =>
+    `Artículo ${a.numero} (${a.fuente}) — ${a.titulo}:\n${a.texto}`
+  );
+  return '\n\nTEXTO LITERAL DE ARTÍCULOS RELEVANTES A ESTA CONSULTA:\n\n' + blocks.join('\n\n---\n\n');
+}
+
+// ============================================
 // API CALL — Groq vía proxy Vercel
 // ============================================
 async function callGroqAPI(messages) {
+  const lastUserMsg = [...messages].reverse().find(m => m.role === 'user');
+  const legalContext = lastUserMsg ? buildLegalContext(lastUserMsg.content) : '';
+  const systemContent = legalContext ? (SYSTEM_PROMPT + legalContext) : SYSTEM_PROMPT;
+
   const payload = {
     model: 'llama-3.3-70b-versatile',
     messages: [
-      { role: 'system', content: SYSTEM_PROMPT },
+      { role: 'system', content: systemContent },
       ...messages
     ],
     temperature: 0.3,
